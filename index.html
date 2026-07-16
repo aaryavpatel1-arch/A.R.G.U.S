@@ -1,0 +1,130 @@
+<script>
+    const peer = new Peer();
+    let connections = []; 
+    const box = document.getElementById('messages');
+    
+    // Keep track of recently received message IDs to prevent loops
+    const seenMessageIds = new Set();
+
+    // Automatically display your unique random room ID
+    peer.on('open', (id) => {
+        document.getElementById('my-id').innerText = id;
+    });
+
+    // Listen for incoming links from other classrooms
+    peer.on('connection', (conn) => {
+        setupConnection(conn);
+        logSystemMessage("A friend has joined the workspace!");
+    });
+
+    // Click handler to connect outward to another classroom ID
+    document.getElementById('connect-btn').addEventListener('click', () => {
+        const targetId = document.getElementById('target-id').value.trim();
+        if (!targetId || connections.some(c => c.peer === targetId)) return;
+
+        const conn = peer.connect(targetId);
+        setupConnection(conn);
+        logSystemMessage("Attempting to connect to friend...");
+        document.getElementById('target-id').value = '';
+    });
+
+    function setupConnection(conn) {
+        // Wait until the connection is officially open before adding it to active pools
+        conn.on('open', () => {
+            // Avoid duplicate connection entries
+            if (!connections.some(c => c.peer === conn.peer)) {
+                connections.push(conn);
+                updatePeerCount();
+            }
+        });
+
+        // When a message arrives from a friend
+        conn.on('data', (data) => {
+            // CRITICAL: Check if we have already handled this exact message
+            if (seenMessageIds.has(data.id)) {
+                return; // Stop the loop right here
+            }
+
+            // Mark it as seen
+            seenMessageIds.add(data.id);
+            
+            // Render it locally
+            appendMessage(data.user, data.text);
+            
+            // Forward it to everyone else except the node it came from
+            broadcast(data, conn.peer);
+            
+            // Clean up memory after a minute so the Set doesn't grow forever
+            setTimeout(() => seenMessageIds.delete(data.id), 60000);
+        });
+
+        conn.on('close', () => {
+            connections = connections.filter(c => c.peer !== conn.peer);
+            updatePeerCount();
+            logSystemMessage("A friend left the workspace.");
+        });
+        
+        conn.on('error', () => {
+            connections = connections.filter(c => c.peer !== conn.peer);
+            updatePeerCount();
+        });
+    }
+
+    function sendMessage(e) {
+        e.preventDefault();
+        const userField = document.getElementById('username');
+        const msgField = document.getElementById('message');
+        
+        const user = userField.value.trim();
+        const text = msgField.value.trim();
+
+        if (user && text) {
+            // Generate a unique ID for this specific message instance
+            const messageId = peer.id + '-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            
+            const payload = { 
+                id: messageId, 
+                user: user, 
+                text: text 
+            };
+            
+            // Track it locally so we don't reflect our own message back
+            seenMessageIds.add(messageId);
+            
+            // Show it on your own screen locally
+            appendMessage(user, text);
+            
+            // Send it to everyone else
+            broadcast(payload);
+            
+            msgField.value = '';
+        }
+    }
+
+    function broadcast(data, skipId = null) {
+        connections.forEach(c => {
+            // Only send to open data channels
+            if (c.open && c.peer !== skipId) {
+                c.send(data);
+            }
+        });
+    }
+
+    function appendMessage(user, text) {
+        // Safe string escaping helper to prevent basic HTML injection
+        const cleanUser = user.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const cleanText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        
+        box.innerHTML += `<div class="msg"><span class="user">[${cleanUser}]:</span> ${cleanText}</div>`;
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function logSystemMessage(text) {
+        box.innerHTML += `<div class="msg" style="color:gray; font-style:italic;"><span class="user">[System]:</span> ${text}</div>`;
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function updatePeerCount() {
+        document.getElementById('peer-count').innerText = connections.length;
+    }
+</script>
