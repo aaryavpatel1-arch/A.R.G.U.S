@@ -47,6 +47,14 @@
         let ably;
         let channel;
 
+        // Automatically load saved name if it exists
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedName = localStorage.getItem('argus_agent_name');
+            if (savedName) {
+                document.getElementById('username').value = savedName;
+            }
+        });
+
         try {
             ably = new Ably.Realtime(ABLY_KEY);
             
@@ -84,6 +92,9 @@
             const text = msgField.value.trim();
 
             if (user && text && channel) {
+                // Save name to browser memory before sending
+                localStorage.setItem('argus_agent_name', user);
+                
                 channel.publish('msg', { user: user, text: text });
                 msgField.value = '';
             }
