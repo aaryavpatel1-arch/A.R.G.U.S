@@ -84,16 +84,16 @@
             if (savedName) {
                 document.getElementById('username').value = savedName;
             } else {
-                // If it's a first time user, populate the field with their temporary random agent name
                 document.getElementById('username').value = currentAgentName;
             }
         });
 
         try {
-            // Setup connection configuration mapping the clientId directly to our username
+            // Updated configuration adding global backup targets to pierce firewalls
             ably = new Ably.Realtime({
                 key: ABLY_KEY,
-                clientId: currentAgentName
+                clientId: currentAgentName,
+                fallbackHosts: ['a.ably-realtime.com', 'b.ably-realtime.com', 'c.ably-realtime.com', 'd.ably-realtime.com', 'e.ably-realtime.com']
             });
             
             ably.connection.on('connected', () => {
@@ -115,20 +115,16 @@
         function joinChatRoom(roomId) {
             channel = ably.channels.get(roomId);
 
-            // Chat message subscription logic
             channel.subscribe('msg', (message) => {
                 appendMessage(message.data.user, message.data.text);
             });
 
-            // Presence layer: register presence with our current name identity
             channel.presence.enter();
 
-            // Presence listeners to catch when people join, leave, or update names
             channel.presence.subscribe(['enter', 'leave', 'present', 'update'], () => {
                 refreshRosterList();
             });
 
-            // Listen specifically for entry to flash the transient silent popup banner
             channel.presence.subscribe('enter', (member) => {
                 if (member.clientId === currentAgentName) return;
                 triggerVisualPopup(member.clientId);
@@ -147,7 +143,6 @@
                     return;
                 }
 
-                // Loop through all active users connected to the channel
                 members.forEach((member) => {
                     const cleanName = member.clientId.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                     const isMe = member.clientId === currentAgentName ? " (You)" : "";
@@ -182,4 +177,29 @@
             const text = msgField.value.trim();
 
             if (user && text && channel) {
-                // If a user
+                if (user !== currentAgentName) {
+                    localStorage.setItem('argus_agent_name', user);
+                    alert("Agent ID Updated. Reloading terminal interface to sync profile configuration.");
+                    window.location.reload();
+                    return;
+                }
+                
+                channel.publish('msg', { user: user, text: text });
+                msgField.value = '';
+            }
+        }
+
+        function appendMessage(user, text) {
+            const cleanUser = user.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const cleanText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            box.innerHTML += `<div class="msg"><span class="user">[${cleanUser}]:</span> ${cleanText}</div>`;
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function logSystemMessage(text) {
+            box.innerHTML += `<div class="msg" style="color:#a8a8b3; font-style:italic;"><span class="user">[System]:</span> ${text}</div>`;
+            box.scrollTop = box.scrollHeight;
+        }
+    </script>
+</body>
+</html>
