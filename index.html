@@ -3,7 +3,7 @@
 <head>
     <title>Cloud Workspace</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+    <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; }
         .chat-container { max-width: 500px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
@@ -19,16 +19,16 @@
         <h3>☁️ Cloud Workspace Chat</h3>
         
         <div class="connection-box">
-            <div><b>Your Unique ID:</b> <span id="my-id" style="color:#e74c3c; font-family:monospace;">Connecting...</span></div>
+            <div><b>Your Room ID:</b> <span id="my-id" style="color:#e74c3c; font-family:monospace;">Generating...</span></div>
             <div style="margin-top: 8px; display: flex; gap: 5px;">
-                <input type="text" id="target-id" placeholder="Paste friend's ID here..." style="flex:1; padding:6px; border:1px solid #ddd; border-radius:4px;">
-                <button id="connect-btn" style="background:#3498db; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">➕ Add Friend</button>
+                <input type="text" id="target-id" placeholder="Type a Shared Room ID..." style="flex:1; padding:6px; border:1px solid #ddd; border-radius:4px;">
+                <button id="connect-btn" style="background:#3498db; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">🚪 Join Room</button>
             </div>
-            <div style="margin-top: 5px; color:#7f8c8d; font-size:11px;">Connected friends: <span id="peer-count">0</span></div>
+            <div style="margin-top: 5px; color:#7f8c8d; font-size:11px;">Status: <span id="peer-count" style="color: green; font-weight: bold;">Connected to Network</span></div>
         </div>
 
         <div class="messages" id="messages">
-            <div class="msg"><span class="user">[System]:</span> Cloud Alert Room active. Connect a friend to start.</div>
+            <div class="msg"><span class="user">[System]:</span> Firewall-Proof Room active. Type a room ID above to join your friends!</div>
         </div>
         
         <form id="chat-form" onsubmit="sendMessage(event)">
@@ -41,95 +41,59 @@
     </div>
 
     <script>
-        // Emergency visual tracker to catch hidden network errors on screen
-        window.onerror = function(message, source, lineno, colno, error) {
-            const box = document.getElementById('messages');
-            if(box) {
-                box.innerHTML += `<div style="color:red; font-weight:bold;">[Screen Error]: ${message} at line ${lineno}</div>`;
-            }
-            return false;
-        };
+        // PASTE YOUR ABLY KEY INSIDE THE QUOTES BELOW:
+        const ABLY_KEY = '1lp6tg.HQf56Q:jG8WN7pKzXPd5tttAPzxYkI1oa3IBXDG_PVPWjknUmI';
 
-        let peer;
-        let connections = []; 
         const box = document.getElementById('messages');
-        const seenMessageIds = new Set();
+        let ably;
+        let channel;
+
+        // Generate a random room ID automatically just to give you an idea
+        const randomRoomId = Math.random().toString(36).substr(2, 6).toUpperCase();
+        document.getElementById('my-id').innerText = randomRoomId;
 
         try {
-            // Forcing secure WebSocket options and adding public STUN servers
-            peer = new Peer({
-                host: '0.peerjs.com',
-                port: 443,
-                path: '/',
-                secure: true,
-                config: {
-                    'iceServers': [
-                        { url: 'stun:stun.l.google.com:19302' },
-                        { url: 'stun:stun1.l.google.com:19302' },
-                        { url: 'stun:stun2.l.google.com:19302' }
-                    ]
-                }
-            });
-
-            peer.on('open', (id) => {
-                document.getElementById('my-id').innerText = id;
-            });
-
-            peer.on('connection', (conn) => {
-                setupConnection(conn);
-                logSystemMessage("A friend has joined the workspace!");
-            });
-
-            peer.on('error', (err) => {
-                logSystemMessage("PeerJS Network Error: " + err.type + ". (If stuck on Connecting, check your network connection).");
-                console.error(err);
-            });
-        } catch (e) {
-            alert("Failed to initialize PeerJS network: " + e.message);
-        }
-
-        document.getElementById('connect-btn').addEventListener('click', () => {
-            const targetId = document.getElementById('target-id').value.trim();
-            if (!targetId || connections.some(c => c.peer === targetId)) return;
-
-            try {
-                const conn = peer.connect(targetId);
-                setupConnection(conn);
-                logSystemMessage("Attempting to connect to friend...");
-                document.getElementById('target-id').value = '';
-            } catch(e) {
-                logSystemMessage("Connection failed: " + e.message);
-            }
-        });
-
-        function setupConnection(conn) {
-            conn.on('open', () => {
-                if (!connections.some(c => c.peer === conn.peer)) {
-                    connections.push(conn);
-                    updatePeerCount();
-                }
-            });
-
-            conn.on('data', (data) => {
-                if (seenMessageIds.has(data.id)) return;
-                seenMessageIds.add(data.id);
-                
-                appendMessage(data.user, data.text);
-                broadcast(data, conn.peer);
-                
-                setTimeout(() => seenMessageIds.delete(data.id), 60000);
-            });
-
-            conn.on('close', () => {
-                connections = connections.filter(c => c.peer !== conn.peer);
-                updatePeerCount();
-                logSystemMessage("A friend left the workspace.");
+            // Connect to Ably's enterprise data stream network
+            ably = new Ably.Realtime(ABLY_KEY);
+            
+            ably.connection.on('connected', () => {
+                document.getElementById('peer-count').innerText = "Online";
             });
             
-            conn.on('error', (err) => {
-                connections = connections.filter(c => c.peer !== conn.peer);
-                updatePeerCount();
-                logSystemMessage("Connection error: " + err.message);
+            ably.connection.on('failed', () => {
+                logSystemMessage("Connection completely blocked by network firewalls.");
+            });
+
+            // Start by joining a default global room, or your own generated one
+            joinChatRoom(randomRoomId);
+
+        } catch(e) {
+            alert("Network system error: " + e.message);
+        }
+
+        // Click handler to switch rooms
+        document.getElementById('connect-btn').addEventListener('click', () => {
+            const targetRoom = document.getElementById('target-id').value.trim().toUpperCase();
+            if (!targetRoom) return;
+
+            joinChatRoom(targetRoom);
+            logSystemMessage(`Left old room. Joined Room: ${targetRoom}`);
+            document.getElementById('my-id').innerText = targetRoom;
+            document.getElementById('target-id').value = '';
+        });
+
+        function joinChatRoom(roomId) {
+            // If we are already in a channel, detach from it first
+            if (channel) {
+                channel.unsubscribe();
+            }
+
+            // Open a specific room channel on the global network
+            channel = ably.channels.get(roomId);
+
+            // Listen for incoming messages from ANYONE in this room channel
+            channel.subscribe('msg', (message) => {
+                appendMessage(message.data.user, message.data.text);
             });
         }
 
@@ -141,23 +105,11 @@
             const user = userField.value.trim();
             const text = msgField.value.trim();
 
-            if (user && text) {
-                const messageId = peer.id + '-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-                const payload = { id: messageId, user: user, text: text };
-                
-                seenMessageIds.add(messageId);
-                appendMessage(user, text);
-                broadcast(payload);
+            if (user && text && channel) {
+                // Publish the message data straight to the room
+                channel.publish('msg', { user: user, text: text });
                 msgField.value = '';
             }
-        }
-
-        function broadcast(data, skipId = null) {
-            connections.forEach(c => {
-                if (c.open && c.peer !== skipId) {
-                    c.send(data);
-                }
-            });
         }
 
         function appendMessage(user, text) {
@@ -170,10 +122,6 @@
         function logSystemMessage(text) {
             box.innerHTML += `<div class="msg" style="color:gray; font-style:italic;"><span class="user">[System]:</span> ${text}</div>`;
             box.scrollTop = box.scrollHeight;
-        }
-
-        function updatePeerCount() {
-            document.getElementById('peer-count').innerText = connections.length;
         }
     </script>
 </body>
