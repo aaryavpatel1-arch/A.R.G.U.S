@@ -79,6 +79,9 @@
         let channel;
         let currentAgentName = localStorage.getItem('argus_agent_name') || 'Agent_' + Math.floor(Math.random() * 1000);
 
+        // Deduplication tracker
+        let lastProcessedMessageId = '';
+
         window.addEventListener('DOMContentLoaded', () => {
             const savedName = localStorage.getItem('argus_agent_name');
             if (savedName) {
@@ -89,7 +92,6 @@
         });
 
         try {
-            // Updated configuration adding global backup targets to pierce firewalls
             ably = new Ably.Realtime({
                 key: ABLY_KEY,
                 clientId: currentAgentName,
@@ -116,6 +118,11 @@
             channel = ably.channels.get(roomId);
 
             channel.subscribe('msg', (message) => {
+                // Deduplication Check: If we already handled this exact message ID, throw it away
+                if (message.id === lastProcessedMessageId) {
+                    return; 
+                }
+                lastProcessedMessageId = message.id;
                 appendMessage(message.data.user, message.data.text);
             });
 
