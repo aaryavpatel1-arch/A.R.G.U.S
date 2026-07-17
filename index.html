@@ -13,6 +13,10 @@
         .btn { padding: 12px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 8px; font-size: 14px; }
         .connection-box { background: #202024; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; border-left: 4px solid #ff3333; }
         
+        /* Online roster styling */
+        .roster-box { margin-top: 8px; font-size: 12px; border-top: 1px dashed #29292e; padding-top: 8px; }
+        .agent-tag { inline-size: max-content; display: inline-block; background: #09090a; padding: 2px 8px; border-radius: 12px; margin: 2px; font-family: monospace; border: 1px solid #29292e; }
+        
         /* Silent Visual Pop-up Alert Notification Overlay */
         .join-popup {
             position: absolute;
@@ -44,6 +48,11 @@
         <div class="connection-box">
             <div><b>Secure Uplink:</b> <span id="my-id" style="color:#ff3333; font-family:monospace; font-weight: bold;">MAIN_FREQUENCY</span></div>
             <div style="margin-top: 5px; color:#a8a8b3; font-size:11px;">Status: <span id="peer-count" style="color: #3498db; font-weight: bold;">Establishing Connection...</span></div>
+            
+            <div class="roster-box">
+                <div><b>Active Agents:</b></div>
+                <div id="agent-roster" style="margin-top: 4px;"><span style="color: gray; font-style: italic;">Awaiting network handshake...</span></div>
+            </div>
         </div>
 
         <div class="messages" id="messages">
@@ -68,22 +77,23 @@
         const box = document.getElementById('messages');
         let ably;
         let channel;
-        let currentAgentName = '';
+        let currentAgentName = localStorage.getItem('argus_agent_name') || 'Agent_' + Math.floor(Math.random() * 1000);
 
         window.addEventListener('DOMContentLoaded', () => {
             const savedName = localStorage.getItem('argus_agent_name');
             if (savedName) {
                 document.getElementById('username').value = savedName;
-                currentAgentName = savedName;
+            } else {
+                // If it's a first time user, populate the field with their temporary random agent name
+                document.getElementById('username').value = currentAgentName;
             }
         });
 
         try {
-            // Setup connection client configuration
+            // Setup connection configuration mapping the clientId directly to our username
             ably = new Ably.Realtime({
                 key: ABLY_KEY,
-                // Assign a temporary fallback client identifier if no saved name exists yet
-                clientId: localStorage.getItem('argus_agent_name') || 'Guest_' + Math.floor(Math.random() * 1000)
+                clientId: currentAgentName
             });
             
             ably.connection.on('connected', () => {
@@ -110,15 +120,44 @@
                 appendMessage(message.data.user, message.data.text);
             });
 
-            // Presence layer: enter the room so others see you
+            // Presence layer: register presence with our current name identity
             channel.presence.enter();
 
-            // Presence layer: listen for when OTHER people enter the room
+            // Presence listeners to catch when people join, leave, or update names
+            channel.presence.subscribe(['enter', 'leave', 'present', 'update'], () => {
+                refreshRosterList();
+            });
+
+            // Listen specifically for entry to flash the transient silent popup banner
             channel.presence.subscribe('enter', (member) => {
-                // Ignore our own join alert pop-up trigger
                 if (member.clientId === currentAgentName) return;
-                
                 triggerVisualPopup(member.clientId);
+            });
+        }
+
+        function refreshRosterList() {
+            channel.presence.get((err, members) => {
+                if (err) return;
+                
+                const rosterDiv = document.getElementById('agent-roster');
+                rosterDiv.innerHTML = '';
+                
+                if(members.length === 0) {
+                    rosterDiv.innerHTML = '<span style="color: gray; font-style: italic;">No agents on frequency.</span>';
+                    return;
+                }
+
+                // Loop through all active users connected to the channel
+                members.forEach((member) => {
+                    const cleanName = member.clientId.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    const isMe = member.clientId === currentAgentName ? " (You)" : "";
+                    const dotColor = member.clientId === currentAgentName ? "#2ecc71" : "#3498db";
+                    
+                    rosterDiv.innerHTML += `
+                        <span class="agent-tag">
+                            <span style="color: ${dotColor};">●</span> ${cleanName}${isMe}
+                        </span>`;
+                });
             });
         }
 
@@ -129,7 +168,6 @@
             popup.innerHTML = `🟢 Agent [${cleanName}] has joined the uplink`;
             popup.classList.add('show');
             
-            // Slide up and hide the silent notification notice after 3 seconds
             setTimeout(() => {
                 popup.classList.remove('show');
             }, 3000);
@@ -144,29 +182,4 @@
             const text = msgField.value.trim();
 
             if (user && text && channel) {
-                // If name changes mid-session, update memory and Ably data tracking sync layers
-                if (user !== currentAgentName) {
-                    localStorage.setItem('argus_agent_name', user);
-                    currentAgentName = user;
-                    channel.presence.update();
-                }
-                
-                channel.publish('msg', { user: user, text: text });
-                msgField.value = '';
-            }
-        }
-
-        function appendMessage(user, text) {
-            const cleanUser = user.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            const cleanText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            box.innerHTML += `<div class="msg"><span class="user">[${cleanUser}]:</span> ${cleanText}</div>`;
-            box.scrollTop = box.scrollHeight;
-        }
-
-        function logSystemMessage(text) {
-            box.innerHTML += `<div class="msg" style="color:#a8a8b3; font-style:italic;"><span class="user">[System]:</span> ${text}</div>`;
-            box.scrollTop = box.scrollHeight;
-        }
-    </script>
-</body>
-</html>
+                // If a user
