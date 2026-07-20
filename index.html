@@ -40,7 +40,7 @@
         <h2 style="color: #00ff41; margin-top: 0;">🔺 A.R.G.U.S Terminal Login</h2>
         <p style="font-size: 13px; color: #a8a8b3;">Enter your callsign to enter the global operative network.</p>
         <form onsubmit="handleLogin(event)">
-            <input type="text" id="login-name" placeholder="Enter Agent Name..." required autocomplete="off">
+            <input type="text" id="login-name" placeholder="Enter Agent Name..." required autocomplete="off" spellcheck="true" autocorrect="on" autocapitalize="words">
             <button type="submit" class="btn">Connect to Network</button>
         </form>
     </div>
@@ -80,7 +80,7 @@
         
         <form onsubmit="sendMessage(event)">
             <div style="display:flex; gap:8px;">
-                <input type="text" id="message-input" placeholder="Transmit message..." style="flex:1; margin:0;" required autocomplete="off">
+                <input type="text" id="message-input" placeholder="Transmit message..." style="flex:1; margin:0;" required spellcheck="true" autocorrect="on" autocapitalize="sentences">
                 <button type="submit" class="btn" style="width:auto; padding:8px 16px; margin:0;">Send</button>
             </div>
         </form>
@@ -120,7 +120,7 @@
         setInterval(drawMatrix, 33);
 
         // --- A.R.G.U.S SYSTEM LOGIC ---
-        // PASTE YOUR ABLY KEY INSIDE THE QUOTES BELOW:
+        // YOUR ABLY KEY HAS BEEN INSERTED BELOW:
         const ABLY_KEY = '1lp6tg.HQf56Q:jG8WN7pKzXPd5tttAPzxYkI1oa3IBXDG_PVPWjknUmI';
 
         const LOBBY_CHANNEL_NAME = 'ARGUS_GLOBAL_LOBBY';
