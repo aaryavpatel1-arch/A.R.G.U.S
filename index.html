@@ -25,6 +25,9 @@
         .msg { margin-bottom: 8px; font-size: 14px; text-align: left; }
         .user { font-weight: bold; color: #00ff41; }
 
+        /* Add People Panel inside Chat */
+        .add-panel { background: rgba(5, 5, 8, 0.95); border: 1px solid #3498db; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
+
         /* Invite Banner Overlay */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; }
         .modal { background: #1a1a1e; border: 2px solid #00ff41; padding: 25px; border-radius: 8px; text-align: center; max-width: 350px; }
@@ -47,7 +50,7 @@
             <h3 style="color: #00ff41; margin: 0;">🔺 Operative Lobby</h3>
             <span style="font-size: 12px; color: #00ff41;">Agent: <b id="my-callsign">---</b></span>
         </div>
-        <p style="font-size: 12px; color: #a8a8b3;">Select an active operative below to request a secure 1-on-1 coms line.</p>
+        <p style="font-size: 12px; color: #a8a8b3;">Select an active operative below to request a private channel, or invite multiple people to a group line.</p>
         <hr style="border-color: #29292e; margin-bottom: 15px;">
         
         <div><b>Online Operatives:</b></div>
@@ -59,9 +62,19 @@
     <div id="screen-chat" class="card hidden">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h3 style="color: #00ff41; margin: 0;">🔒 Encrypted Line</h3>
-            <button onclick="leaveChat()" class="btn btn-danger" style="width: auto; padding: 4px 10px; font-size: 12px;">Disconnect</button>
+            <div>
+                <button onclick="toggleAddPanel()" class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 12px; margin: 0 4px 0 0;">+ Add People</button>
+                <button onclick="leaveChat()" class="btn btn-danger" style="width: auto; padding: 4px 10px; font-size: 12px; margin: 0;">Disconnect</button>
+            </div>
         </div>
         <div style="font-size: 11px; color: #a8a8b3; margin-bottom: 10px;">Channel ID: <span id="chat-room-id" style="color: #00ff41; font-family: monospace;">---</span></div>
+
+        <div id="add-panel" class="add-panel hidden">
+            <div style="font-size: 12px; color: #3498db; font-weight: bold; margin-bottom: 6px;">Invite Additional Operatives to Room:</div>
+            <div id="add-panel-list" style="max-height: 120px; overflow-y: auto;">
+                <span style="color: gray; font-size: 11px; font-style: italic;">No other online agents available.</span>
+            </div>
+        </div>
 
         <div class="messages" id="messages"></div>
         
@@ -76,7 +89,7 @@
     <div id="invite-modal" class="modal-overlay hidden">
         <div class="modal">
             <h3 style="color: #00ff41; margin-top:0;">📡 Incoming Uplink Request</h3>
-            <p><b id="inviter-name" style="color:#3498db;">Agent</b> wants to open a private secure frequency with you.</p>
+            <p><b id="inviter-name" style="color:#3498db;">Agent</b> wants to add you to a secure room frequency.</p>
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button onclick="acceptInvite()" class="btn" style="margin:0;">Accept</button>
                 <button onclick="declineInvite()" class="btn btn-danger" style="margin:0;">Decline</button>
@@ -113,6 +126,7 @@
         const LOBBY_CHANNEL_NAME = 'ARGUS_GLOBAL_LOBBY';
         let ably, lobbyChannel, privateChannel;
         let myAgentName = '';
+        let currentRoomId = null;
         let pendingInvite = null;
         let lastMsgId = '';
 
@@ -130,7 +144,6 @@
             localStorage.setItem('argus_agent_name', myAgentName);
             document.getElementById('my-callsign').innerText = myAgentName;
 
-            // Connect to Ably using the chosen name
             try {
                 ably = new Ably.Realtime({
                     key: ABLY_KEY,
@@ -152,17 +165,15 @@
         function enterLobby() {
             lobbyChannel = ably.channels.get(LOBBY_CHANNEL_NAME);
 
-            // Register presence in global lobby
             lobbyChannel.presence.enter();
 
-            // Track online users
             lobbyChannel.presence.subscribe(['enter', 'leave', 'present', 'update'], () => {
                 updateLobbyRoster();
+                updateInRoomAddPanel();
             });
 
-            // Listen for direct invitations targeted to ME
             lobbyChannel.subscribe('invite_' + myAgentName, (msg) => {
-                pendingInvite = msg.data; // { sender, roomId }
+                pendingInvite = msg.data;
                 document.getElementById('inviter-name').innerText = pendingInvite.sender;
                 document.getElementById('invite-modal').classList.remove('hidden');
             });
@@ -193,19 +204,54 @@
             });
         }
 
-        function sendInvite(targetAgent) {
-            const uniqueRoomId = 'ROOM_' + Math.random().toString(36).substring(2, 9).toUpperCase();
+        function sendInvite(targetAgent, customRoomId = null) {
+            const targetRoomId = customRoomId || currentRoomId || ('ROOM_' + Math.random().toString(36).substring(2, 9).toUpperCase());
             
-            // Publish invitation signal onto lobby channel for target user
             lobbyChannel.publish('invite_' + targetAgent, {
                 sender: myAgentName,
-                roomId: uniqueRoomId
+                roomId: targetRoomId
             });
 
-            alert(`Invite transmitted to Agent [${targetAgent}]. Waiting for response...`);
+            alert(`Invite transmitted to Agent [${targetAgent}].`);
             
-            // Automatically enter the newly created room waiting for them to accept
-            openPrivateChat(uniqueRoomId);
+            if (!currentRoomId) {
+                openPrivateChat(targetRoomId);
+            }
+        }
+
+        function toggleAddPanel() {
+            const panel = document.getElementById('add-panel');
+            panel.classList.toggle('hidden');
+            if (!panel.classList.contains('hidden')) {
+                updateInRoomAddPanel();
+            }
+        }
+
+        function updateInRoomAddPanel() {
+            if (!lobbyChannel) return;
+
+            lobbyChannel.presence.get((err, members) => {
+                if (err) return;
+                const listDiv = document.getElementById('add-panel-list');
+                listDiv.innerHTML = '';
+
+                const others = members.filter(m => m.clientId !== myAgentName);
+
+                if (others.length === 0) {
+                    listDiv.innerHTML = '<span style="color: gray; font-size: 11px; font-style: italic;">No other agents online right now.</span>';
+                    return;
+                }
+
+                others.forEach(m => {
+                    const cleanName = m.clientId.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    listDiv.innerHTML += `
+                        <div class="agent-item" style="padding: 6px; margin-bottom: 4px;">
+                            <span style="font-size: 12px; color: #fff;">● ${cleanName}</span>
+                            <button class="btn invite-btn btn-secondary" onclick="sendInvite('${cleanName}', '${currentRoomId}')">+ Add to Room</button>
+                        </div>
+                    `;
+                });
+            });
         }
 
         function acceptInvite() {
@@ -221,24 +267,29 @@
         }
 
         function openPrivateChat(roomId) {
+            currentRoomId = roomId;
             document.getElementById('screen-lobby').classList.add('hidden');
             document.getElementById('screen-chat').classList.remove('hidden');
+            document.getElementById('add-panel').classList.add('hidden');
             document.getElementById('chat-room-id').innerText = roomId;
-            document.getElementById('messages').innerHTML = `<div class="msg" style="color:gray;"><i>Encrypted line created. Frequency: ${roomId}</i></div>`;
 
-            privateChannel = ably.channels.get(roomId);
-            
-            privateChannel.subscribe('msg', (message) => {
-                if (message.id === lastMsgId) return;
-                lastMsgId = message.id;
+            if (!privateChannel || privateChannel.name !== roomId) {
+                document.getElementById('messages').innerHTML = `<div class="msg" style="color:gray;"><i>Encrypted line active. Frequency: ${roomId}</i></div>`;
+
+                privateChannel = ably.channels.get(roomId);
                 
-                const cleanUser = message.data.user.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                const cleanText = message.data.text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                
-                const box = document.getElementById('messages');
-                box.innerHTML += `<div class="msg"><span class="user">[${cleanUser}]:</span> ${cleanText}</div>`;
-                box.scrollTop = box.scrollHeight;
-            });
+                privateChannel.subscribe('msg', (message) => {
+                    if (message.id === lastMsgId) return;
+                    lastMsgId = message.id;
+                    
+                    const cleanUser = message.data.user.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    const cleanText = message.data.text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    
+                    const box = document.getElementById('messages');
+                    box.innerHTML += `<div class="msg"><span class="user">[${cleanUser}]:</span> ${cleanText}</div>`;
+                    box.scrollTop = box.scrollHeight;
+                });
+            }
         }
 
         function sendMessage(e) {
@@ -256,6 +307,7 @@
             if (privateChannel) {
                 privateChannel.unsubscribe();
             }
+            currentRoomId = null;
             document.getElementById('screen-chat').classList.add('hidden');
             document.getElementById('screen-lobby').classList.remove('hidden');
         }
