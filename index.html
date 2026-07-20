@@ -37,7 +37,7 @@
     <canvas id="matrix-canvas"></canvas>
 
     <div id="screen-login" class="card">
-        <h2 style="color: #00ff41; margin-top: 0;">🔺 A.R.G.U.S Terminal Login</h2>
+        <h2 style="color: #00ff41; margin-top: 0; text-align: center;">🔺 A.R.G.U.S Terminal Login</h2>
         <p style="font-size: 13px; color: #a8a8b3;">Enter your callsign to enter the global operative network.</p>
         <form onsubmit="handleLogin(event)">
             <input type="text" id="login-name" placeholder="Enter Agent Name..." required spellcheck="true" autocorrect="on" autocapitalize="words">
@@ -158,8 +158,10 @@
         // App System Logic
         const LOBBY_CHANNEL_NAME = 'ARGUS_GLOBAL_LOBBY';
         
-        // Change this to your secret username so only you see the admin button:
+        // -------------------------------------------------------------
+        // SET YOUR SECRET OWNER NAME HERE:
         const OWNER_CALLSIGN = 'YourSecretNameHere'; 
+        // -------------------------------------------------------------
 
         let ably, lobbyChannel, privateChannel;
         let myAgentName = '';
@@ -181,6 +183,7 @@
             localStorage.setItem('argus_agent_name', myAgentName);
             document.getElementById('my-callsign').innerText = myAgentName;
 
+            // Show admin button ONLY if login name matches your secret owner callsign
             const adminBtn = document.getElementById('admin-btn');
             if (myAgentName === OWNER_CALLSIGN) {
                 adminBtn.classList.remove('hidden');
@@ -189,6 +192,7 @@
             }
 
             try {
+                // Connect via backend token auth
                 ably = new Ably.Realtime({
                     authUrl: `/auth?clientId=${encodeURIComponent(myAgentName)}`,
                     fallbackHosts: ['a.ably-realtime.com', 'b.ably-realtime.com', 'c.ably-realtime.com']
