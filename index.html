@@ -14,9 +14,10 @@
         .btn { padding: 12px; color: #000; background: #00ff41; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 8px; font-size: 14px; }
         .btn:hover { background: #00cc33; }
         .btn-secondary { background: #3498db; color: #fff; }
+        .btn-warning { background: #f39c12; color: #000; }
         .btn-danger { background: #ff3333; color: #fff; }
 
-        input[type="text"] { width: 95%; padding: 10px; border: 1px solid #00ff41; background: rgba(5, 5, 8, 0.9); color: white; border-radius: 4px; margin-bottom: 10px; }
+        input[type="text"], input[type="password"], textarea { width: 95%; padding: 10px; border: 1px solid #00ff41; background: rgba(5, 5, 8, 0.9); color: white; border-radius: 4px; margin-bottom: 10px; font-family: inherit; }
         
         .agent-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(5, 5, 8, 0.8); border: 1px solid #29292e; border-radius: 4px; margin-bottom: 8px; }
         .invite-btn { width: auto; padding: 6px 12px; margin: 0; font-size: 12px; }
@@ -25,12 +26,11 @@
         .msg { margin-bottom: 8px; font-size: 14px; text-align: left; }
         .user { font-weight: bold; color: #00ff41; }
 
-        /* Add People Panel inside Chat */
+        .announcement-banner { background: #f39c12; color: #000; padding: 10px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; border: 1px solid #e67e22; box-shadow: 0 0 15px rgba(243, 156, 18, 0.5); }
         .add-panel { background: rgba(5, 5, 8, 0.95); border: 1px solid #3498db; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
 
-        /* Invite Banner Overlay */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .modal { background: #1a1a1e; border: 2px solid #00ff41; padding: 25px; border-radius: 8px; text-align: center; max-width: 350px; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal { background: #1a1a1e; border: 2px solid #00ff41; padding: 25px; border-radius: 8px; text-align: center; max-width: 400px; width: 90%; }
     </style>
 </head>
 <body>
@@ -40,22 +40,42 @@
         <h2 style="color: #00ff41; margin-top: 0;">🔺 A.R.G.U.S Terminal Login</h2>
         <p style="font-size: 13px; color: #a8a8b3;">Enter your callsign to enter the global operative network.</p>
         <form onsubmit="handleLogin(event)">
-            <input type="text" id="login-name" placeholder="Enter Agent Name..." required autocomplete="off" spellcheck="true" autocorrect="on" autocapitalize="words">
+            <input type="text" id="login-name" placeholder="Enter Agent Name..." required spellcheck="true" autocorrect="on" autocapitalize="words">
             <button type="submit" class="btn">Connect to Network</button>
         </form>
     </div>
 
     <div id="screen-lobby" class="card hidden">
+        <div id="announcement-box" class="announcement-banner hidden">
+            📣 <b>SYSTEM ANNOUNCEMENT:</b> <span id="announcement-text"></span>
+        </div>
+
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h3 style="color: #00ff41; margin: 0;">🔺 Operative Lobby</h3>
-            <span style="font-size: 12px; color: #00ff41;">Agent: <b id="my-callsign">---</b></span>
+            <div>
+                <span style="font-size: 12px; color: #00ff41; margin-right: 8px;">Agent: <b id="my-callsign">---</b></span>
+                <button id="admin-btn" onclick="toggleAdminModal()" class="btn btn-warning hidden" style="width: auto; padding: 4px 8px; font-size: 11px;">⚙️ Admin</button>
+            </div>
         </div>
-        <p style="font-size: 12px; color: #a8a8b3;">Select an active operative below to request a private channel, or invite multiple people to a group line.</p>
+        <p style="font-size: 12px; color: #a8a8b3;">Select an active operative below to request a channel or invite multiple agents.</p>
         <hr style="border-color: #29292e; margin-bottom: 15px;">
         
         <div><b>Online Operatives:</b></div>
         <div id="lobby-roster" style="margin-top: 10px;">
             <span style="color: gray; font-style: italic;">Scanning network frequency...</span>
+        </div>
+
+        <div style="margin-top: 20px; text-align: center;">
+            <h4 style="color: #00ff41; margin-bottom: 8px; font-size: 12px;">☀️ ENVIRONMENTAL MONITOR</h4>
+            <iframe id="uvindexwidget" 
+                    src="https://www.sunsmart.com.au/uvalert/widget.aspx?version=australia&locationid=161" 
+                    width="170" 
+                    height="300" 
+                    frameborder="0" 
+                    scrolling="no" 
+                    style="padding:0; margin: 0px; overflow:hidden; border-radius: 8px; border: 1px solid #00ff41;" 
+                    allowtransparency="true">
+            </iframe>
         </div>
     </div>
 
@@ -63,16 +83,16 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h3 style="color: #00ff41; margin: 0;">🔒 Encrypted Line</h3>
             <div>
-                <button onclick="toggleAddPanel()" class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 12px; margin: 0 4px 0 0;">+ Add People</button>
-                <button onclick="leaveChat()" class="btn btn-danger" style="width: auto; padding: 4px 10px; font-size: 12px; margin: 0;">Disconnect</button>
+                <button onclick="toggleAddPanel()" class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 12px; margin-right: 4px;">+ Add People</button>
+                <button onclick="leaveChat()" class="btn btn-danger" style="width: auto; padding: 4px 10px; font-size: 12px;">Disconnect</button>
             </div>
         </div>
         <div style="font-size: 11px; color: #a8a8b3; margin-bottom: 10px;">Channel ID: <span id="chat-room-id" style="color: #00ff41; font-family: monospace;">---</span></div>
 
         <div id="add-panel" class="add-panel hidden">
-            <div style="font-size: 12px; color: #3498db; font-weight: bold; margin-bottom: 6px;">Invite Additional Operatives to Room:</div>
+            <div style="font-size: 12px; color: #3498db; font-weight: bold; margin-bottom: 6px;">Invite Additional Operatives:</div>
             <div id="add-panel-list" style="max-height: 120px; overflow-y: auto;">
-                <span style="color: gray; font-size: 11px; font-style: italic;">No other online agents available.</span>
+                <span style="color: gray; font-size: 11px; font-style: italic;">No online agents available.</span>
             </div>
         </div>
 
@@ -89,7 +109,7 @@
     <div id="invite-modal" class="modal-overlay hidden">
         <div class="modal">
             <h3 style="color: #00ff41; margin-top:0;">📡 Incoming Uplink Request</h3>
-            <p><b id="inviter-name" style="color:#3498db;">Agent</b> wants to add you to a secure room frequency.</p>
+            <p><b id="inviter-name" style="color:#3498db;">Agent</b> wants to add you to a secure frequency.</p>
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button onclick="acceptInvite()" class="btn" style="margin:0;">Accept</button>
                 <button onclick="declineInvite()" class="btn btn-danger" style="margin:0;">Decline</button>
@@ -97,8 +117,24 @@
         </div>
     </div>
 
+    <div id="admin-modal" class="modal-overlay hidden">
+        <div class="modal" style="border-color: #f39c12;">
+            <h3 style="color: #f39c12; margin-top:0;">⚙️ Owner Control Panel</h3>
+            <p style="font-size: 12px; color: #a8a8b3;">Broadcast network-wide announcements to all connected operatives.</p>
+            
+            <form onsubmit="sendAnnouncement(event)">
+                <input type="password" id="admin-pass" placeholder="Admin Password..." required>
+                <textarea id="admin-msg" rows="3" placeholder="Type system broadcast message here..." required spellcheck="true" autocorrect="on"></textarea>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button type="submit" class="btn btn-warning" style="margin:0;">Broadcast</button>
+                    <button type="button" onclick="toggleAdminModal()" class="btn btn-danger" style="margin:0;">Close</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        // --- MATRIX BACKGROUND ANIMATION ---
+        // Matrix Canvas Background
         const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
         function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
@@ -119,11 +155,12 @@
         }
         setInterval(drawMatrix, 33);
 
-        // --- A.R.G.U.S SYSTEM LOGIC ---
-        // YOUR ABLY KEY HAS BEEN INSERTED BELOW:
-        const ABLY_KEY = '1lp6tg.HQf56Q:jG8WN7pKzXPd5tttAPzxYkI1oa3IBXDG_PVPWjknUmI';
-
+        // App System Logic
         const LOBBY_CHANNEL_NAME = 'ARGUS_GLOBAL_LOBBY';
+        
+        // Change this to your secret username so only you see the admin button:
+        const OWNER_CALLSIGN = 'YourSecretNameHere'; 
+
         let ably, lobbyChannel, privateChannel;
         let myAgentName = '';
         let currentRoomId = null;
@@ -144,10 +181,16 @@
             localStorage.setItem('argus_agent_name', myAgentName);
             document.getElementById('my-callsign').innerText = myAgentName;
 
+            const adminBtn = document.getElementById('admin-btn');
+            if (myAgentName === OWNER_CALLSIGN) {
+                adminBtn.classList.remove('hidden');
+            } else {
+                adminBtn.classList.add('hidden');
+            }
+
             try {
                 ably = new Ably.Realtime({
-                    key: ABLY_KEY,
-                    clientId: myAgentName,
+                    authUrl: `/auth?clientId=${encodeURIComponent(myAgentName)}`,
                     fallbackHosts: ['a.ably-realtime.com', 'b.ably-realtime.com', 'c.ably-realtime.com']
                 });
 
@@ -164,7 +207,6 @@
 
         function enterLobby() {
             lobbyChannel = ably.channels.get(LOBBY_CHANNEL_NAME);
-
             lobbyChannel.presence.enter();
 
             lobbyChannel.presence.subscribe(['enter', 'leave', 'present', 'update'], () => {
@@ -176,6 +218,13 @@
                 pendingInvite = msg.data;
                 document.getElementById('inviter-name').innerText = pendingInvite.sender;
                 document.getElementById('invite-modal').classList.remove('hidden');
+            });
+
+            lobbyChannel.subscribe('system_announcement', (msg) => {
+                const box = document.getElementById('announcement-box');
+                const textSpan = document.getElementById('announcement-text');
+                textSpan.innerText = `[${msg.data.timestamp}] ${msg.data.text}`;
+                box.classList.remove('hidden');
             });
         }
 
@@ -213,23 +262,17 @@
             });
 
             alert(`Invite transmitted to Agent [${targetAgent}].`);
-            
-            if (!currentRoomId) {
-                openPrivateChat(targetRoomId);
-            }
+            if (!currentRoomId) openPrivateChat(targetRoomId);
         }
 
         function toggleAddPanel() {
             const panel = document.getElementById('add-panel');
             panel.classList.toggle('hidden');
-            if (!panel.classList.contains('hidden')) {
-                updateInRoomAddPanel();
-            }
+            if (!panel.classList.contains('hidden')) updateInRoomAddPanel();
         }
 
         function updateInRoomAddPanel() {
             if (!lobbyChannel) return;
-
             lobbyChannel.presence.get((err, members) => {
                 if (err) return;
                 const listDiv = document.getElementById('add-panel-list');
@@ -254,11 +297,38 @@
             });
         }
 
+        function toggleAdminModal() {
+            document.getElementById('admin-modal').classList.toggle('hidden');
+        }
+
+        async function sendAnnouncement(e) {
+            e.preventDefault();
+            const password = document.getElementById('admin-pass').value;
+            const message = document.getElementById('admin-msg').value;
+
+            try {
+                const res = await fetch('/api/admin/announcement', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password, message })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    alert('Broadcast sent!');
+                    document.getElementById('admin-msg').value = '';
+                    toggleAdminModal();
+                } else {
+                    alert('Failed: ' + data.error);
+                }
+            } catch (err) {
+                alert('Error sending announcement: ' + err.message);
+            }
+        }
+
         function acceptInvite() {
             document.getElementById('invite-modal').classList.add('hidden');
-            if (pendingInvite) {
-                openPrivateChat(pendingInvite.roomId);
-            }
+            if (pendingInvite) openPrivateChat(pendingInvite.roomId);
         }
 
         function declineInvite() {
@@ -304,9 +374,7 @@
         }
 
         function leaveChat() {
-            if (privateChannel) {
-                privateChannel.unsubscribe();
-            }
+            if (privateChannel) privateChannel.unsubscribe();
             currentRoomId = null;
             document.getElementById('screen-chat').classList.add('hidden');
             document.getElementById('screen-lobby').classList.remove('hidden');
