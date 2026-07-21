@@ -52,7 +52,6 @@
             backdrop-filter: blur(12px); 
         }
 
-        /* Draggable Pop-up Chat Window */
         .chat-popup {
             position: fixed;
             top: 15%;
@@ -172,7 +171,7 @@
 
     <div id="screen-login" class="card">
         <h2 style="color: var(--primary); text-align: center; margin-top: 0;">A.R.G.U.S. TERMINAL</h2>
-        <p style="font-size: 13px; color: var(--text-muted); text-align: center;">Enter callsign to connect (Use "ADMIN" for Command Terminal).</p>
+        <p style="font-size: 13px; color: var(--text-muted); text-align: center;">Enter callsign to connect to tactical comms.</p>
         <form onsubmit="handleLogin(event)">
             <input type="text" id="login-name" placeholder="Agent Callsign..." required>
             <button type="submit" class="btn">Establish Uplink</button>
@@ -272,6 +271,9 @@
     </div>
 
     <script>
+        // Secret Admin Security Configuration
+        const SECRET_ADMIN_PASSCODE = "ARGUS-SECRET-2026"; // Change your admin key here
+
         // Matrix Canvas Background
         const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
@@ -405,6 +407,18 @@
             const input = document.getElementById('login-name').value.trim();
             if (!input) return;
 
+            let isAdminLogin = false;
+
+            // Secret trigger check
+            if (input.toUpperCase() === 'ADMIN') {
+                const passcode = prompt("🔐 ENTER SECRET COMMAND PASSCODE:");
+                if (passcode !== SECRET_ADMIN_PASSCODE) {
+                    alert("⛔ ACCESS DENIED: Incorrect Secret Passcode.");
+                    return;
+                }
+                isAdminLogin = true;
+            }
+
             myAgentName = input;
             localStorage.setItem('argus_agent_name', myAgentName);
             document.getElementById('my-callsign').innerText = myAgentName;
@@ -421,7 +435,7 @@
                 ably.connection.on('connected', () => {
                     lobbyChannel = ably.channels.get(LOBBY_CHANNEL_NAME);
 
-                    // Check if callsign is already active on the network
+                    // Presence duplication check
                     lobbyChannel.presence.get((err, members) => {
                         if (err) {
                             alert("Error checking network presence: " + err.message);
@@ -437,8 +451,8 @@
                             return;
                         }
 
-                        // Unique callsign confirmed -> enter application
-                        if (myAgentName.toUpperCase() === 'ADMIN') {
+                        // Unique callsign confirmed
+                        if (isAdminLogin) {
                             document.getElementById('screen-login').classList.add('hidden');
                             document.getElementById('screen-admin').classList.remove('hidden');
                         } else {
