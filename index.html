@@ -41,29 +41,20 @@
             opacity: 0.8;
         }
 
-        /* Glassmorphism Card Design */
         .card { 
             width: 100%;
-            max-width: 520px; 
+            max-width: 540px; 
             background: var(--card-bg); 
             padding: 28px; 
             border-radius: 16px; 
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8), 0 0 15px var(--primary-glow); 
             border: 1px solid rgba(0, 255, 102, 0.25); 
             backdrop-filter: blur(12px); 
-            transition: all 0.3s ease;
         }
 
         .hidden { display: none !important; }
 
-        h2, h3, h4 {
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            margin: 0;
-        }
-
-        /* Input Controls */
-        input[type="text"], input[type="password"], textarea { 
+        input[type="text"], textarea { 
             width: 100%; 
             padding: 12px 16px; 
             border: 1px solid rgba(0, 255, 102, 0.3); 
@@ -74,18 +65,12 @@
             font-family: inherit;
             font-size: 14px;
             box-sizing: border-box;
-            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 10px var(--primary-glow);
-        }
+        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 10px var(--primary-glow); }
 
-        /* Modern Buttons */
         .btn { 
-            padding: 12px 18px; 
+            padding: 10px 16px; 
             color: #000; 
             background: var(--primary); 
             border: none; 
@@ -93,54 +78,45 @@
             cursor: pointer; 
             font-weight: 700; 
             width: 100%; 
-            font-size: 14px; 
-            letter-spacing: 0.5px;
+            font-size: 13px; 
             text-transform: uppercase;
-            transition: transform 0.1s ease, filter 0.2s ease, box-shadow 0.2s ease;
             box-shadow: 0 0 10px var(--primary-glow);
         }
 
-        .btn:hover { 
-            filter: brightness(1.2);
-            box-shadow: 0 0 18px var(--primary-glow);
-        }
+        .btn:hover { filter: brightness(1.2); }
+        .btn-secondary { background: var(--accent-blue); color: #000; }
+        .btn-warning { background: var(--accent-warning); color: #000; }
+        .btn-danger { background: var(--accent-danger); color: #fff; }
 
-        .btn:active { transform: scale(0.98); }
-        .btn-secondary { background: var(--accent-blue); color: #000; box-shadow: 0 0 10px rgba(0, 210, 255, 0.3); }
-        .btn-warning { background: var(--accent-warning); color: #000; box-shadow: 0 0 10px rgba(255, 183, 3, 0.3); }
-        .btn-danger { background: var(--accent-danger); color: #fff; box-shadow: 0 0 10px rgba(255, 0, 85, 0.3); }
-
-        /* Operative Roster Items */
         .agent-item { 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            padding: 12px 14px; 
+            padding: 10px 14px; 
             background: rgba(255, 255, 255, 0.03); 
             border: 1px solid rgba(255, 255, 255, 0.08); 
             border-radius: 8px; 
             margin-bottom: 8px; 
         }
 
-        .agent-status {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: var(--primary);
-            border-radius: 50%;
-            margin-right: 8px;
-            box-shadow: 0 0 8px var(--primary);
-        }
+        .action-btns { display: flex; gap: 6px; }
 
         .invite-btn { 
             width: auto; 
-            padding: 6px 14px; 
-            margin: 0; 
+            padding: 6px 10px; 
             font-size: 11px; 
             border-radius: 6px;
         }
 
-        /* Messages Window */
+        .section-header {
+            font-size: 13px; 
+            font-weight: 700; 
+            color: var(--primary);
+            margin: 15px 0 8px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
         .messages { 
             height: 260px; 
             overflow-y: auto; 
@@ -151,73 +127,18 @@
             border-radius: 10px; 
         }
 
-        .messages::-webkit-scrollbar { width: 6px; }
-        .messages::-webkit-scrollbar-thumb { background: rgba(0, 255, 102, 0.3); border-radius: 4px; }
+        .msg { margin-bottom: 10px; font-size: 13px; }
+        .user { font-weight: 700; color: var(--primary); margin-right: 4px; }
 
-        .msg { 
-            margin-bottom: 10px; 
-            font-size: 13px; 
-            line-height: 1.4;
-        }
-
-        .user { 
-            font-weight: 700; 
-            color: var(--primary); 
-            margin-right: 4px;
-        }
-
-        /* Banners & Panels */
-        .announcement-banner { 
-            background: rgba(255, 183, 3, 0.15); 
-            color: #ffd166; 
-            padding: 12px; 
-            border-radius: 8px; 
-            font-weight: 600; 
-            margin-bottom: 15px; 
-            border: 1px solid var(--accent-warning); 
-            font-size: 13px;
-        }
-
-        .add-panel { 
-            background: rgba(0, 210, 255, 0.08); 
-            border: 1px solid var(--accent-blue); 
-            padding: 12px; 
-            border-radius: 8px; 
-            margin-bottom: 15px; 
-        }
-
-        /* Modal Popups */
         .modal-overlay { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: rgba(0, 0, 0, 0.85); 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            z-index: 1000; 
-            backdrop-filter: blur(6px);
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0, 0, 0, 0.85); display: flex; justify-content: center; 
+            align-items: center; z-index: 1000; backdrop-filter: blur(6px);
         }
 
         .modal { 
-            background: #0d131c; 
-            border: 1px solid var(--primary); 
-            padding: 25px; 
-            border-radius: 14px; 
-            text-align: center; 
-            max-width: 400px; 
-            width: 90%; 
-            box-shadow: 0 0 25px var(--primary-glow);
-        }
-
-        /* Widget Container Styling */
-        .widget-box {
-            margin-top: 22px; 
-            padding-top: 15px;
-            border-top: 1px dashed rgba(255, 255, 255, 0.1);
-            text-align: center;
+            background: #0d131c; border: 1px solid var(--primary); 
+            padding: 25px; border-radius: 14px; text-align: center; max-width: 400px; width: 90%; 
         }
     </style>
 </head>
@@ -225,102 +146,66 @@
     <canvas id="matrix-canvas"></canvas>
 
     <div id="screen-login" class="card">
-        <h2 style="color: var(--primary); text-align: center; font-size: 22px; margin-bottom: 8px;">A.R.G.U.S. TERMINAL</h2>
-        <p style="font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 20px;">Enter your callsign to authenticate access to network coms.</p>
+        <h2 style="color: var(--primary); text-align: center; margin-top: 0;">A.R.G.U.S. TERMINAL</h2>
+        <p style="font-size: 13px; color: var(--text-muted); text-align: center;">Enter callsign to connect.</p>
         <form onsubmit="handleLogin(event)">
-            <input type="text" id="login-name" placeholder="Agent Callsign..." required spellcheck="true" autocorrect="on" autocapitalize="words">
+            <input type="text" id="login-name" placeholder="Agent Callsign..." required>
             <button type="submit" class="btn">Establish Uplink</button>
         </form>
     </div>
 
     <div id="screen-lobby" class="card hidden">
-        <div id="announcement-box" class="announcement-banner hidden">
-            📢 <b>SYSTEM BROADCAST:</b> <span id="announcement-text"></span>
-        </div>
-
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h3 style="color: var(--primary); font-size: 18px;">Network Lobby</h3>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 12px; color: var(--text-muted);">Agent: <b id="my-callsign" style="color: #fff;">---</b></span>
-                <button id="admin-btn" onclick="toggleAdminModal()" class="btn btn-warning hidden" style="width: auto; padding: 5px 10px; font-size: 11px;">⚙️ Admin</button>
-            </div>
-        </div>
-        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">Available operatives on channel. Select one to open an encrypted frequency.</p>
-        
-        <div style="font-size: 13px; font-weight: 600; margin-bottom: 10px;">Active Agents</div>
-        <div id="lobby-roster">
-            <span style="color: var(--text-muted); font-style: italic; font-size: 13px;">Scanning frequencies...</span>
+            <h3 style="color: var(--primary); margin:0;">Network Lobby</h3>
+            <span style="font-size: 12px; color: var(--text-muted);">Agent: <b id="my-callsign" style="color: #fff;">---</b></span>
         </div>
 
-        <div class="widget-box">
-            <h4 style="color: var(--primary); margin-bottom: 10px; font-size: 11px; letter-spacing: 1px;">ENVIRONMENTAL MONITOR</h4>
-            <iframe id="uvindexwidget" 
-                    src="https://www.sunsmart.com.au/uvalert/widget.aspx?version=australia&locationid=161" 
-                    width="170" 
-                    height="300" 
-                    frameborder="0" 
-                    scrolling="no" 
-                    style="padding:0; margin: 0px; overflow:hidden; border-radius: 12px; border: 1px solid rgba(0, 255, 102, 0.3);" 
-                    allowtransparency="true">
-            </iframe>
+        <div class="section-header">⭐ Saved Friends</div>
+        <div id="friends-roster">
+            <span style="color: var(--text-muted); font-size: 12px; font-style: italic;">No friends added yet.</span>
+        </div>
+
+        <div class="section-header">🌐 Online Operatives</div>
+        <div id="lobby-roster">
+            <span style="color: var(--text-muted); font-size: 12px; font-style: italic;">Scanning network...</span>
+        </div>
+
+        <div style="margin-top: 20px; text-align: center; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px;">
+            <h4 style="color: var(--primary); font-size: 11px; margin-bottom: 8px;">ENVIRONMENTAL MONITOR</h4>
+            <iframe id="uvindexwidget" src="https://www.sunsmart.com.au/uvalert/widget.aspx?version=australia&locationid=161" width="170" height="300" frameborder="0" scrolling="no" style="overflow:hidden; border-radius: 12px; border: 1px solid rgba(0,255,102,0.3);" allowtransparency="true"></iframe>
         </div>
     </div>
 
     <div id="screen-chat" class="card hidden">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <h3 style="color: var(--primary); font-size: 18px;">🔒 Encrypted Line</h3>
-            <div style="display: flex; gap: 6px;">
-                <button onclick="toggleAddPanel()" class="btn btn-secondary" style="width: auto; padding: 6px 10px; font-size: 11px;">+ Add Agent</button>
-                <button onclick="leaveChat()" class="btn btn-danger" style="width: auto; padding: 6px 10px; font-size: 11px;">Disconnect</button>
-            </div>
+            <h3 style="color: var(--primary); margin:0;" id="chat-title">🔒 Direct Message</h3>
+            <button onclick="leaveChat()" class="btn btn-danger" style="width: auto; padding: 6px 12px; font-size: 11px;">Back to Lobby</button>
         </div>
-        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">Frequency ID: <span id="chat-room-id" style="color: var(--primary); font-family: monospace;">---</span></div>
-
-        <div id="add-panel" class="add-panel hidden">
-            <div style="font-size: 12px; color: var(--accent-blue); font-weight: bold; margin-bottom: 8px;">Invite Additional Operatives:</div>
-            <div id="add-panel-list" style="max-height: 110px; overflow-y: auto;">
-                <span style="color: var(--text-muted); font-size: 11px; font-style: italic;">No online agents available.</span>
-            </div>
-        </div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">Channel: <span id="chat-room-id" style="color: var(--primary); font-family: monospace;">---</span></div>
 
         <div class="messages" id="messages"></div>
         
         <form onsubmit="sendMessage(event)">
             <div style="display:flex; gap:8px;">
-                <input type="text" id="message-input" placeholder="Transmit secure text..." style="flex:1; margin:0;" required spellcheck="true" autocorrect="on" autocapitalize="sentences">
+                <input type="text" id="message-input" placeholder="Type message..." style="flex:1; margin:0;" required>
                 <button type="submit" class="btn" style="width:auto; padding:8px 18px; margin:0;">Send</button>
             </div>
         </form>
     </div>
 
-    <div id="invite-modal" class="modal-overlay hidden">
+    <div id="friend-modal" class="modal-overlay hidden">
         <div class="modal">
-            <h3 style="color: var(--primary); margin-top:0;">📡 Uplink Requested</h3>
-            <p style="font-size: 14px; margin: 15px 0;"><b id="inviter-name" style="color: var(--accent-blue);">Agent</b> is requesting an encrypted connection.</p>
+            <h3 style="color: var(--accent-blue); margin-top:0;">🤝 Friend Request</h3>
+            <p style="font-size: 14px; margin: 15px 0;"><b id="friend-req-sender" style="color: var(--primary);">Agent</b> wants to add you to their Friends List.</p>
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button onclick="acceptInvite()" class="btn" style="margin:0;">Accept</button>
-                <button onclick="declineInvite()" class="btn btn-danger" style="margin:0;">Decline</button>
+                <button onclick="acceptFriendRequest()" class="btn" style="margin:0;">Accept</button>
+                <button onclick="declineFriendRequest()" class="btn btn-danger" style="margin:0;">Decline</button>
             </div>
         </div>
     </div>
 
-    <div id="admin-modal" class="modal-overlay hidden">
-        <div class="modal" style="border-color: var(--accent-warning);">
-            <h3 style="color: var(--accent-warning); margin-top:0;">⚙️ System Broadcast</h3>
-            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Transmit a global message to all active agents.</p>
-            
-            <form onsubmit="sendAnnouncement(event)">
-                <textarea id="admin-msg" rows="3" placeholder="Type global announcement here..." required spellcheck="true" autocorrect="on"></textarea>
-                <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button type="submit" class="btn btn-warning" style="margin:0;">Broadcast</button>
-                    <button type="button" onclick="toggleAdminModal()" class="btn btn-danger" style="margin:0;">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script>
-        // Matrix Canvas Animation
+        // Matrix Canvas Background
         const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
         function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
@@ -341,21 +226,37 @@
         }
         setInterval(drawMatrix, 33);
 
-        // Application State Logic
+        // State & Data
         const LOBBY_CHANNEL_NAME = 'ARGUS_GLOBAL_LOBBY';
-        
-        // Change this to your secret username so only you see the admin button:
-        const OWNER_CALLSIGN = 'YourSecretNameHere'; 
-
         let ably, lobbyChannel, privateChannel;
         let myAgentName = '';
         let currentRoomId = null;
-        let pendingInvite = null;
-        let lastMsgId = '';
+        let pendingFriendReq = null;
+        let friendsList = [];
+
+        // Request Desktop Notification Permission
+        function requestNotificationPermission() {
+            if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+                Notification.requestPermission();
+            }
+        }
+
+        // Helper function to send notification to laptop
+        function sendDesktopNotification(title, body) {
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification(title, {
+                    body: body,
+                    icon: "https://cdn-icons-png.flaticon.com/512/10832/10832811.png"
+                });
+            }
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
-            const saved = localStorage.getItem('argus_agent_name');
-            if (saved) document.getElementById('login-name').value = saved;
+            const savedName = localStorage.getItem('argus_agent_name');
+            if (savedName) document.getElementById('login-name').value = savedName;
+            
+            const savedFriends = localStorage.getItem('argus_friends_list');
+            if (savedFriends) friendsList = JSON.parse(savedFriends);
         });
 
         function handleLogin(e) {
@@ -367,12 +268,7 @@
             localStorage.setItem('argus_agent_name', myAgentName);
             document.getElementById('my-callsign').innerText = myAgentName;
 
-            const adminBtn = document.getElementById('admin-btn');
-            if (myAgentName === OWNER_CALLSIGN) {
-                adminBtn.classList.remove('hidden');
-            } else {
-                adminBtn.classList.add('hidden');
-            }
+            requestNotificationPermission();
 
             try {
                 ably = new Ably.Realtime({
@@ -386,9 +282,8 @@
                     document.getElementById('screen-lobby').classList.remove('hidden');
                     enterLobby();
                 });
-
             } catch(err) {
-                alert("Connection failed: " + err.message);
+                alert("Connection error: " + err.message);
             }
         }
 
@@ -396,22 +291,32 @@
             lobbyChannel = ably.channels.get(LOBBY_CHANNEL_NAME);
             lobbyChannel.presence.enter();
 
-            lobbyChannel.presence.subscribe(['enter', 'leave', 'present', 'update'], () => {
+            renderFriendsList();
+
+            lobbyChannel.presence.subscribe(['enter', 'leave', 'present', 'update'], (member) => {
                 updateLobbyRoster();
-                updateInRoomAddPanel();
+
+                // Trigger desktop notification when another agent enters
+                if (member.action === 'enter' && member.clientId !== myAgentName) {
+                    const isFriend = friendsList.includes(member.clientId);
+                    const tag = isFriend ? "⭐ Friend Online!" : "🌐 Operative Online!";
+                    sendDesktopNotification(tag, `Agent [${member.clientId}] has connected to A.R.G.U.S.`);
+                }
             });
 
-            lobbyChannel.subscribe('invite_' + myAgentName, (msg) => {
-                pendingInvite = msg.data;
-                document.getElementById('inviter-name').innerText = pendingInvite.sender;
-                document.getElementById('invite-modal').classList.remove('hidden');
+            // Listen for Friend Requests
+            lobbyChannel.subscribe('freq_' + myAgentName, (msg) => {
+                pendingFriendReq = msg.data;
+                document.getElementById('friend-req-sender').innerText = pendingFriendReq.sender;
+                document.getElementById('friend-modal').classList.remove('hidden');
+
+                sendDesktopNotification("🤝 Friend Request", `Agent [${pendingFriendReq.sender}] sent you a friend request!`);
             });
 
-            lobbyChannel.subscribe('system_announcement', (msg) => {
-                const box = document.getElementById('announcement-box');
-                const textSpan = document.getElementById('announcement-text');
-                textSpan.innerText = `[${msg.data.timestamp}] ${msg.data.text}`;
-                box.classList.remove('hidden');
+            // Listen for Friend Request Acceptance
+            lobbyChannel.subscribe('freq_accept_' + myAgentName, (msg) => {
+                addFriendToStorage(msg.data.sender);
+                alert(`Agent [${msg.data.sender}] accepted your friend request!`);
             });
         }
 
@@ -424,119 +329,108 @@
                 const others = members.filter(m => m.clientId !== myAgentName);
 
                 if (others.length === 0) {
-                    roster.innerHTML = '<span style="color: var(--text-muted); font-style: italic; font-size: 12px;">No other agents online right now.</span>';
+                    roster.innerHTML = '<span style="color: var(--text-muted); font-size: 12px; font-style: italic;">No other agents online right now.</span>';
                     return;
                 }
 
                 others.forEach(m => {
                     const cleanName = m.clientId.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    const isFriend = friendsList.includes(cleanName);
+
                     roster.innerHTML += `
                         <div class="agent-item">
-                            <div style="display: flex; align-items: center;"><span class="agent-status"></span><b>${cleanName}</b></div>
-                            <button class="btn invite-btn" onclick="sendInvite('${cleanName}')">Connect</button>
+                            <div><span style="color:var(--primary);">●</span> <b>${cleanName}</b></div>
+                            <div class="action-btns">
+                                <button class="btn invite-btn" onclick="openFriendChat('${cleanName}')">Chat</button>
+                                ${!isFriend ? `<button class="btn invite-btn btn-secondary" onclick="sendFriendRequest('${cleanName}')">+ Add Friend</button>` : ''}
+                            </div>
                         </div>
                     `;
                 });
             });
         }
 
-        function sendInvite(targetAgent, customRoomId = null) {
-            const targetRoomId = customRoomId || currentRoomId || ('ROOM_' + Math.random().toString(36).substring(2, 9).toUpperCase());
-            
-            lobbyChannel.publish('invite_' + targetAgent, {
-                sender: myAgentName,
-                roomId: targetRoomId
-            });
+        function renderFriendsList() {
+            const roster = document.getElementById('friends-roster');
+            roster.innerHTML = '';
 
-            alert(`Uplink invite sent to Agent [${targetAgent}].`);
-            if (!currentRoomId) openPrivateChat(targetRoomId);
-        }
+            if (friendsList.length === 0) {
+                roster.innerHTML = '<span style="color: var(--text-muted); font-size: 12px; font-style: italic;">No friends saved yet.</span>';
+                return;
+            }
 
-        function toggleAddPanel() {
-            const panel = document.getElementById('add-panel');
-            panel.classList.toggle('hidden');
-            if (!panel.classList.contains('hidden')) updateInRoomAddPanel();
-        }
-
-        function updateInRoomAddPanel() {
-            if (!lobbyChannel) return;
-            lobbyChannel.presence.get((err, members) => {
-                if (err) return;
-                const listDiv = document.getElementById('add-panel-list');
-                listDiv.innerHTML = '';
-
-                const others = members.filter(m => m.clientId !== myAgentName);
-
-                if (others.length === 0) {
-                    listDiv.innerHTML = '<span style="color: var(--text-muted); font-size: 11px; font-style: italic;">No other agents online.</span>';
-                    return;
-                }
-
-                others.forEach(m => {
-                    const cleanName = m.clientId.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                    listDiv.innerHTML += `
-                        <div class="agent-item" style="padding: 6px 10px; margin-bottom: 4px;">
-                            <span style="font-size: 12px; color: #fff;">● ${cleanName}</span>
-                            <button class="btn invite-btn btn-secondary" onclick="sendInvite('${cleanName}', '${currentRoomId}')">+ Add</button>
-                        </div>
-                    `;
-                });
+            friendsList.forEach(friend => {
+                roster.innerHTML += `
+                    <div class="agent-item">
+                        <div>⭐ <b>${friend}</b></div>
+                        <button class="btn invite-btn btn-secondary" onclick="openFriendChat('${friend}')">Open Chatbox</button>
+                    </div>
+                `;
             });
         }
 
-        function toggleAdminModal() {
-            document.getElementById('admin-modal').classList.toggle('hidden');
+        function sendFriendRequest(targetAgent) {
+            lobbyChannel.publish('freq_' + targetAgent, { sender: myAgentName });
+            alert(`Friend request transmitted to Agent [${targetAgent}].`);
         }
 
-        function sendAnnouncement(e) {
-            e.preventDefault();
-            const message = document.getElementById('admin-msg').value.trim();
-            if (!message || !lobbyChannel) return;
-
-            lobbyChannel.publish('system_announcement', {
-                text: message,
-                timestamp: new Date().toLocaleTimeString()
-            });
-
-            alert('Global broadcast transmitted!');
-            document.getElementById('admin-msg').value = '';
-            toggleAdminModal();
+        function acceptFriendRequest() {
+            document.getElementById('friend-modal').classList.add('hidden');
+            if (pendingFriendReq) {
+                addFriendToStorage(pendingFriendReq.sender);
+                lobbyChannel.publish('freq_accept_' + pendingFriendReq.sender, { sender: myAgentName });
+            }
         }
 
-        function acceptInvite() {
-            document.getElementById('invite-modal').classList.add('hidden');
-            if (pendingInvite) openPrivateChat(pendingInvite.roomId);
+        function declineFriendRequest() {
+            document.getElementById('friend-modal').classList.add('hidden');
+            pendingFriendReq = null;
         }
 
-        function declineInvite() {
-            document.getElementById('invite-modal').classList.add('hidden');
-            pendingInvite = null;
+        function addFriendToStorage(friendName) {
+            if (!friendsList.includes(friendName)) {
+                friendsList.push(friendName);
+                localStorage.setItem('argus_friends_list', JSON.stringify(friendsList));
+                renderFriendsList();
+                updateLobbyRoster();
+            }
         }
 
-        function openPrivateChat(roomId) {
+        function getFriendRoomId(friendName) {
+            const sorted = [myAgentName, friendName].sort();
+            return `DM_${sorted[0]}_${sorted[1]}`;
+        }
+
+        function openFriendChat(friendName) {
+            const roomId = getFriendRoomId(friendName);
             currentRoomId = roomId;
+
             document.getElementById('screen-lobby').classList.add('hidden');
             document.getElementById('screen-chat').classList.remove('hidden');
-            document.getElementById('add-panel').classList.add('hidden');
+            document.getElementById('chat-title').innerText = `💬 Chat with ${friendName}`;
             document.getElementById('chat-room-id').innerText = roomId;
 
-            if (!privateChannel || privateChannel.name !== roomId) {
-                document.getElementById('messages').innerHTML = `<div class="msg" style="color:var(--text-muted);"><i>Encrypted channel live: ${roomId}</i></div>`;
+            const box = document.getElementById('messages');
+            box.innerHTML = `<div class="msg" style="color:var(--text-muted);"><i>Loading message history...</i></div>`;
 
-                privateChannel = ably.channels.get(roomId);
+            if (privateChannel) privateChannel.unsubscribe();
+
+            privateChannel = ably.channels.get(roomId, { params: { rewind: '50' } });
+
+            box.innerHTML = '';
+
+            privateChannel.subscribe('msg', (message) => {
+                const cleanUser = message.data.user.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                const cleanText = message.data.text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                 
-                privateChannel.subscribe('msg', (message) => {
-                    if (message.id === lastMsgId) return;
-                    lastMsgId = message.id;
-                    
-                    const cleanUser = message.data.user.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                    const cleanText = message.data.text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                    
-                    const box = document.getElementById('messages');
-                    box.innerHTML += `<div class="msg"><span class="user">[${cleanUser}]:</span> ${cleanText}</div>`;
-                    box.scrollTop = box.scrollHeight;
-                });
-            }
+                box.innerHTML += `<div class="msg"><span class="user">[${cleanUser}]:</span> ${cleanText}</div>`;
+                box.scrollTop = box.scrollHeight;
+
+                // Send desktop notification if message is from friend while tabbed away
+                if (cleanUser !== myAgentName && document.hidden) {
+                    sendDesktopNotification(`💬 Message from ${cleanUser}`, cleanText);
+                }
+            });
         }
 
         function sendMessage(e) {
