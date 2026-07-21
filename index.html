@@ -121,6 +121,20 @@
             border: 1px solid rgba(255, 255, 255, 0.08); 
             border-radius: 8px; 
             margin-bottom: 6px; 
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+
+        .agent-item:hover {
+            border-color: rgba(0, 255, 102, 0.4);
+            background: rgba(0, 255, 102, 0.05);
+        }
+
+        .agent-item.selected {
+            background: rgba(0, 255, 102, 0.18);
+            border-color: var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
         }
 
         .action-btns { display: flex; gap: 6px; }
@@ -164,6 +178,14 @@
             background: #0d131c; border: 1px solid var(--primary); 
             padding: 20px; border-radius: 14px; text-align: center; max-width: 400px; width: 90%; 
         }
+
+        .group-build-bar {
+            background: rgba(0, 210, 255, 0.1);
+            border: 1px solid var(--accent-blue);
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
     </style>
 </head>
 <body>
@@ -203,10 +225,25 @@
             <div id="forbidden-status" style="font-size: 11px; color: var(--accent-warning); margin-top: 4px;"></div>
         </div>
 
-        <div class="section-header">👥 Group Channels</div>
+        <div id="group-select-bar" class="group-build-bar hidden">
+            <div style="font-size: 11px; color: var(--accent-blue); font-weight: bold; margin-bottom: 4px;">
+                ⚡ SELECTED OPERATIVES (<span id="selected-count">0</span>):
+            </div>
+            <div id="selected-list" style="font-size: 12px; color: #fff; margin-bottom: 8px; font-weight: 600;"></div>
+            <div style="display: flex; gap: 6px;">
+                <button onclick="launchMultiGroupChat()" class="btn btn-secondary" style="margin: 0;">Create Group Chat</button>
+                <button onclick="clearSelectedGroup()" class="btn btn-danger" style="width: auto; margin: 0; padding: 5px 10px;">Clear</button>
+            </div>
+        </div>
+
+        <div class="section-header">👥 Manual Group Search</div>
         <div style="display: flex; gap: 6px; margin-bottom: 10px;">
             <input type="text" id="group-name-input" placeholder="Enter Group Channel Name..." style="margin-bottom: 0;">
             <button onclick="joinGroupChat()" class="btn btn-secondary" style="width: auto; white-space: nowrap;">Join / Create</button>
+        </div>
+
+        <div style="font-size: 11px; color: var(--text-muted); font-style: italic; margin-bottom: 8px;">
+            💡 <b>Tip:</b> Double-click operatives below to select multiple agents for a group chat!
         </div>
 
         <div class="section-header">⭐ Saved Friends</div>
@@ -272,7 +309,7 @@
 
     <script>
         // Secret Admin Security Configuration
-        const SECRET_ADMIN_PASSCODE = "ARGUS-SECRET-2026"; // Change your admin key here
+        const SECRET_ADMIN_PASSCODE = "ARGUS-SECRET-2026";
 
         // Matrix Canvas Background
         const canvas = document.getElementById('matrix-canvas');
@@ -369,7 +406,7 @@
             document.getElementById('grass-modal').classList.remove('hidden');
             if ("Notification" in window && Notification.permission === "granted") {
                 new Notification("🌱 TOUCH GRASS WARNING!", {
-                    body: "You've been on A.R.G.U.S. for 2 hours. Go outside!"
+                    body: "You've been on for 2 hours get the fuck outside and eat grass!"
                 });
             }
         }, 7200000);
@@ -381,6 +418,7 @@
         let currentRoomId = null;
         let pendingFriendReq = null;
         let friendsList = [];
+        let selectedGroupAgents = [];
 
         function requestNotificationPermission() {
             if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
@@ -409,7 +447,6 @@
 
             let isAdminLogin = false;
 
-            // Secret trigger check
             if (input.toUpperCase() === 'ADMIN') {
                 const passcode = prompt("🔐 ENTER SECRET COMMAND PASSCODE:");
                 if (passcode !== SECRET_ADMIN_PASSCODE) {
@@ -435,7 +472,6 @@
                 ably.connection.on('connected', () => {
                     lobbyChannel = ably.channels.get(LOBBY_CHANNEL_NAME);
 
-                    // Presence duplication check
                     lobbyChannel.presence.get((err, members) => {
                         if (err) {
                             alert("Error checking network presence: " + err.message);
@@ -451,7 +487,6 @@
                             return;
                         }
 
-                        // Unique callsign confirmed
                         if (isAdminLogin) {
                             document.getElementById('screen-login').classList.add('hidden');
                             document.getElementById('screen-admin').classList.remove('hidden');
@@ -524,6 +559,51 @@
             });
         }
 
+        // Double Click Selection Logic for Group Chats
+        function toggleSelectAgentForGroup(agentName) {
+            const index = selectedGroupAgents.indexOf(agentName);
+            if (index > -1) {
+                selectedGroupAgents.splice(index, 1);
+            } else {
+                selectedGroupAgents.push(agentName);
+            }
+
+            renderGroupSelectionBar();
+            updateLobbyRoster();
+            renderFriendsList();
+        }
+
+        function renderGroupSelectionBar() {
+            const bar = document.getElementById('group-select-bar');
+            const count = document.getElementById('selected-count');
+            const list = document.getElementById('selected-list');
+
+            if (selectedGroupAgents.length === 0) {
+                bar.classList.add('hidden');
+                return;
+            }
+
+            bar.classList.remove('hidden');
+            count.innerText = selectedGroupAgents.length;
+            list.innerText = selectedGroupAgents.join(', ');
+        }
+
+        function clearSelectedGroup() {
+            selectedGroupAgents = [];
+            renderGroupSelectionBar();
+            updateLobbyRoster();
+            renderFriendsList();
+        }
+
+        function launchMultiGroupChat() {
+            if (selectedGroupAgents.length === 0) return;
+
+            const allMembers = [myAgentName, ...selectedGroupAgents].sort();
+            const roomId = `GROUP_${allMembers.join('_')}`.toUpperCase();
+            openChatRoom(roomId, `👥 Group (${allMembers.length}): ${selectedGroupAgents.join(', ')}`);
+            clearSelectedGroup();
+        }
+
         function updateLobbyRoster() {
             lobbyChannel.presence.get((err, members) => {
                 if (err) return;
@@ -540,13 +620,14 @@
                 others.forEach(m => {
                     const cleanName = m.clientId.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                     const isFriend = friendsList.includes(cleanName);
+                    const isSelected = selectedGroupAgents.includes(cleanName);
 
                     roster.innerHTML += `
-                        <div class="agent-item">
-                            <div><span style="color:var(--primary);">●</span> <b>${cleanName}</b></div>
+                        <div class="agent-item ${isSelected ? 'selected' : ''}" ondblclick="toggleSelectAgentForGroup('${cleanName}')" title="Double click to add to group chat!">
+                            <div><span style="color:var(--primary);">●</span> <b>${cleanName}</b> ${isSelected ? '✓' : ''}</div>
                             <div class="action-btns">
-                                <button class="btn invite-btn" onclick="openFriendChat('${cleanName}')">Chat</button>
-                                ${!isFriend ? `<button class="btn invite-btn btn-secondary" onclick="sendFriendRequest('${cleanName}')">+ Add Friend</button>` : ''}
+                                <button class="btn invite-btn" onclick="openFriendChat('${cleanName}')">DM</button>
+                                ${!isFriend ? `<button class="btn invite-btn btn-secondary" onclick="sendFriendRequest('${cleanName}')">+ Friend</button>` : ''}
                             </div>
                         </div>
                     `;
@@ -564,10 +645,11 @@
             }
 
             friendsList.forEach(friend => {
+                const isSelected = selectedGroupAgents.includes(friend);
                 roster.innerHTML += `
-                    <div class="agent-item">
-                        <div>⭐ <b>${friend}</b></div>
-                        <button class="btn invite-btn btn-secondary" onclick="openFriendChat('${friend}')">Open Chat</button>
+                    <div class="agent-item ${isSelected ? 'selected' : ''}" ondblclick="toggleSelectAgentForGroup('${friend}')" title="Double click to add to group chat!">
+                        <div>⭐ <b>${friend}</b> ${isSelected ? '✓' : ''}</div>
+                        <button class="btn invite-btn btn-secondary" onclick="openFriendChat('${friend}')">DM</button>
                     </div>
                 `;
             });
