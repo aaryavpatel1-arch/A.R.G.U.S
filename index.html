@@ -160,6 +160,11 @@
             <span style="font-size: 12px; color: var(--text-muted);">Agent: <b id="my-callsign" style="color: #fff;">---</b></span>
         </div>
 
+        <div style="margin-bottom: 15px; text-align: center;">
+            <button onclick="pressForbiddenButton()" class="btn btn-danger" style="font-size: 11px; padding: 6px 12px;">⚠️ DO NOT PRESS THIS BUTTON</button>
+            <div id="forbidden-status" style="font-size: 11px; color: var(--accent-warning); margin-top: 4px;"></div>
+        </div>
+
         <div class="section-header">⭐ Saved Friends</div>
         <div id="friends-roster">
             <span style="color: var(--text-muted); font-size: 12px; font-style: italic;">No friends added yet.</span>
@@ -187,7 +192,7 @@
         
         <form onsubmit="sendMessage(event)">
             <div style="display:flex; gap:8px;">
-                <input type="text" id="message-input" placeholder="Type message..." style="flex:1; margin:0;" required>
+                <input type="text" id="message-input" placeholder="Type message or secret command..." style="flex:1; margin:0;" required>
                 <button type="submit" class="btn" style="width:auto; padding:8px 18px; margin:0;">Send</button>
             </div>
         </form>
@@ -201,6 +206,22 @@
                 <button onclick="acceptFriendRequest()" class="btn" style="margin:0;">Accept</button>
                 <button onclick="declineFriendRequest()" class="btn btn-danger" style="margin:0;">Decline</button>
             </div>
+        </div>
+    </div>
+
+    <div id="grass-modal" class="modal-overlay hidden">
+        <div class="modal" style="border-color: #2ec4b6;">
+            <h2 style="color: #2ec4b6; margin-top: 0;">🌱 SYSTEM OVERHEAT!</h2>
+            <p style="font-size: 15px; font-weight: bold; color: #fff;">YOU HAVE BEEN ON A.R.G.U.S. FOR 2 HOURS!</p>
+            <p style="font-size: 13px; color: var(--text-muted);">Please log off immediately, open the front door, and go touch some real grass.</p>
+            <div style="font-size: 50px; margin: 15px 0;">🪴☀️🌾</div>
+            <button onclick="document.getElementById('grass-modal').classList.add('hidden')" class="btn" style="background: #2ec4b6;">I Touched Grass (Close)</button>
+        </div>
+    </div>
+
+    <div id="hack-overlay" class="modal-overlay hidden" style="background: #000;">
+        <div style="color: var(--primary); font-family: monospace; text-align: left; width: 90%; max-width: 500px;">
+            <div id="hack-text" style="font-size: 14px; line-height: 1.6; white-space: pre-wrap;"></div>
         </div>
     </div>
 
@@ -226,7 +247,61 @@
         }
         setInterval(drawMatrix, 33);
 
-        // State & Data
+        // Forbidden Button Logic
+        let buttonPressCount = 0;
+        function pressForbiddenButton() {
+            buttonPressCount++;
+            const status = document.getElementById('forbidden-status');
+            
+            if (buttonPressCount === 1) status.innerText = "Access denied! Stop clicking.";
+            else if (buttonPressCount === 3) status.innerText = "Seriously, stop it.";
+            else if (buttonPressCount === 7) status.innerText = "Sending your location to a random pigeon...";
+            else if (buttonPressCount === 12) status.innerText = "Hacking into your toaster... Popcorn ready!";
+            else if (buttonPressCount === 20) status.innerText = "🎉 YOU WIN NOTHING! Congratulation!";
+            else status.innerText = `You clicked this ${buttonPressCount} times. Get a hobby!`;
+        }
+
+        // Secret /hack Easter Egg Trigger
+        function triggerHackEasterEgg() {
+            const overlay = document.getElementById('hack-overlay');
+            const hackText = document.getElementById('hack-text');
+            overlay.classList.remove('hidden');
+            hackText.innerText = "";
+
+            const lines = [
+                "> INITIALIZING OVERRIDE PROTOCOL...",
+                "> BYPASSING MAIN FRAME FIREWALL [██████████] 100%",
+                "> ACCESSING NASA MICROWAVE FREQUENCIES...",
+                "> INJECTING CUSTOM POPCORN TIMERS...",
+                "> SUCCESS! Popcorn set to 3:00 minutes.",
+                "> RETURNING TO TERMINAL..."
+            ];
+
+            let index = 0;
+            const interval = setInterval(() => {
+                if (index < lines.length) {
+                    hackText.innerText += lines[index] + "\n\n";
+                    index++;
+                } else {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        overlay.classList.add('hidden');
+                    }, 2000);
+                }
+            }, 700);
+        }
+
+        // 2-Hour Touch Grass Timer
+        setTimeout(() => {
+            document.getElementById('grass-modal').classList.remove('hidden');
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification("🌱 TOUCH GRASS WARNING!", {
+                    body: "You've been on A.R.G.U.S. for 2 hours. Go outside!"
+                });
+            }
+        }, 7200000);
+
+        // App State Logic
         const LOBBY_CHANNEL_NAME = 'ARGUS_GLOBAL_LOBBY';
         let ably, lobbyChannel, privateChannel;
         let myAgentName = '';
@@ -234,20 +309,15 @@
         let pendingFriendReq = null;
         let friendsList = [];
 
-        // Request Desktop Notification Permission
         function requestNotificationPermission() {
             if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
                 Notification.requestPermission();
             }
         }
 
-        // Helper function to send notification to laptop
         function sendDesktopNotification(title, body) {
             if ("Notification" in window && Notification.permission === "granted") {
-                new Notification(title, {
-                    body: body,
-                    icon: "https://cdn-icons-png.flaticon.com/512/10832/10832811.png"
-                });
+                new Notification(title, { body: body });
             }
         }
 
@@ -296,24 +366,20 @@
             lobbyChannel.presence.subscribe(['enter', 'leave', 'present', 'update'], (member) => {
                 updateLobbyRoster();
 
-                // Trigger desktop notification when another agent enters
                 if (member.action === 'enter' && member.clientId !== myAgentName) {
                     const isFriend = friendsList.includes(member.clientId);
                     const tag = isFriend ? "⭐ Friend Online!" : "🌐 Operative Online!";
-                    sendDesktopNotification(tag, `Agent [${member.clientId}] has connected to A.R.G.U.S.`);
+                    sendDesktopNotification(tag, `Agent [${member.clientId}] connected!`);
                 }
             });
 
-            // Listen for Friend Requests
             lobbyChannel.subscribe('freq_' + myAgentName, (msg) => {
                 pendingFriendReq = msg.data;
                 document.getElementById('friend-req-sender').innerText = pendingFriendReq.sender;
                 document.getElementById('friend-modal').classList.remove('hidden');
-
-                sendDesktopNotification("🤝 Friend Request", `Agent [${pendingFriendReq.sender}] sent you a friend request!`);
+                sendDesktopNotification("🤝 Friend Request", `Agent [${pendingFriendReq.sender}] sent a request!`);
             });
 
-            // Listen for Friend Request Acceptance
             lobbyChannel.subscribe('freq_accept_' + myAgentName, (msg) => {
                 addFriendToStorage(msg.data.sender);
                 alert(`Agent [${msg.data.sender}] accepted your friend request!`);
@@ -426,7 +492,6 @@
                 box.innerHTML += `<div class="msg"><span class="user">[${cleanUser}]:</span> ${cleanText}</div>`;
                 box.scrollTop = box.scrollHeight;
 
-                // Send desktop notification if message is from friend while tabbed away
                 if (cleanUser !== myAgentName && document.hidden) {
                     sendDesktopNotification(`💬 Message from ${cleanUser}`, cleanText);
                 }
@@ -437,6 +502,12 @@
             e.preventDefault();
             const input = document.getElementById('message-input');
             const text = input.value.trim();
+
+            if (text === '/hack') {
+                input.value = '';
+                triggerHackEasterEgg();
+                return;
+            }
 
             if (text && privateChannel) {
                 privateChannel.publish('msg', { user: myAgentName, text: text });
