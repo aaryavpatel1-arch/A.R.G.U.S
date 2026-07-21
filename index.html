@@ -221,7 +221,7 @@
         </div>
 
         <div style="margin-bottom: 10px; text-align: center;">
-            <button onclick="pressForbiddenButton()" class="btn btn-danger" style="font-size: 10px; padding: 5px 10px;">⚠️ DO NOT PRESS THIS BUTTON</button>
+            <button id="forbidden-btn" onclick="pressForbiddenButton()" class="btn btn-danger" style="font-size: 10px; padding: 5px 10px; transition: all 0.15s ease;">⚠️ DO NOT PRESS THIS BUTTON</button>
             <div id="forbidden-status" style="font-size: 11px; color: var(--accent-warning); margin-top: 4px;"></div>
         </div>
 
@@ -360,17 +360,29 @@
 
         document.addEventListener('mouseup', () => { isDragging = false; });
 
-        // Forbidden Button Logic
+        // Forbidden Button Logic with Flee Functionality after 1,000 clicks
         let buttonPressCount = 0;
         function pressForbiddenButton() {
             buttonPressCount++;
             const status = document.getElementById('forbidden-status');
+            const btn = document.getElementById('forbidden-btn');
+
             if (buttonPressCount === 1) status.innerText = "Access denied! Stop clicking.";
             else if (buttonPressCount === 3) status.innerText = "Seriously, stop it.";
             else if (buttonPressCount === 7) status.innerText = "Sending your location to a random pigeon...";
             else if (buttonPressCount === 12) status.innerText = "Hacking into your toaster... Popcorn ready!";
             else if (buttonPressCount === 20) status.innerText = "🎉 YOU WIN NOTHING! Congratulation!";
-            else status.innerText = `You clicked this ${buttonPressCount} times. Get a hobby!`;
+            else if (buttonPressCount < 1000) status.innerText = `You clicked this ${buttonPressCount} times. Get a hobby!`;
+            else {
+                status.innerText = `⚠️ CRITICAL: SYSTEM OVERLOAD (${buttonPressCount} clicks)! BUTTON IS FLEEING!`;
+                btn.style.position = 'fixed';
+                const padding = 50;
+                const randomX = Math.max(padding, Math.floor(Math.random() * (window.innerWidth - btn.offsetWidth - padding)));
+                const randomY = Math.max(padding, Math.floor(Math.random() * (window.innerHeight - btn.offsetHeight - padding)));
+                btn.style.left = `${randomX}px`;
+                btn.style.top = `${randomY}px`;
+                btn.style.zIndex = '9999';
+            }
         }
 
         // Secret /hack Easter Egg Trigger
@@ -406,7 +418,7 @@
             document.getElementById('grass-modal').classList.remove('hidden');
             if ("Notification" in window && Notification.permission === "granted") {
                 new Notification("🌱 TOUCH GRASS WARNING!", {
-                    body: "You've been on for 2 hours get the fuck outside and eat grass!"
+                    body: "You've been on A.R.G.U.S. for 2 hours. Go outside!"
                 });
             }
         }, 7200000);
@@ -438,6 +450,15 @@
             
             const savedFriends = localStorage.getItem('argus_friends_list');
             if (savedFriends) friendsList = JSON.parse(savedFriends);
+
+            const btn = document.getElementById('forbidden-btn');
+            if (btn) {
+                btn.addEventListener('mouseover', () => {
+                    if (buttonPressCount >= 1000) {
+                        pressForbiddenButton();
+                    }
+                });
+            }
         });
 
         function handleLogin(e) {
@@ -559,7 +580,6 @@
             });
         }
 
-        // Double Click Selection Logic for Group Chats
         function toggleSelectAgentForGroup(agentName) {
             const index = selectedGroupAgents.indexOf(agentName);
             if (index > -1) {
@@ -702,6 +722,12 @@
             input.value = '';
         }
 
+        function closeChatPopup() {
+            document.getElementById('screen-chat').classList.add('hidden');
+            if (privateChannel) privateChannel.unsubscribe();
+            currentRoomId = null;
+        }
+
         function openChatRoom(roomId, title) {
             currentRoomId = roomId;
 
@@ -744,16 +770,13 @@
             }
 
             if (text && privateChannel) {
-                privateChannel.publish('msg', { user: myAgentName, text: text });
+                privateChannel.publish('msg', {
+                    user: myAgentName,
+                    text: text
+                });
                 input.value = '';
             }
         }
-
-        function closeChatPopup() {
-            if (privateChannel) privateChannel.unsubscribe();
-            currentRoomId = null;
-            document.getElementById('screen-chat').classList.add('hidden');
-        }
-    </script> 
+    </script>
 </body>
 </html>
