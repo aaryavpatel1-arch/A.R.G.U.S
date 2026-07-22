@@ -624,22 +624,26 @@
             clearSelectedGroup();
         }
 
+        // Updated: Filters out users who are on your friends list from the general online roster
         function updateLobbyRoster() {
             lobbyChannel.presence.get((err, members) => {
                 if (err) return;
                 const roster = document.getElementById('lobby-roster');
                 roster.innerHTML = '';
 
-                const others = members.filter(m => m.clientId.toLowerCase() !== myAgentName.toLowerCase());
+                const nonFriendOthers = members.filter(m => {
+                    const isSelf = m.clientId.toLowerCase() === myAgentName.toLowerCase();
+                    const isFriend = friendsList.includes(m.clientId);
+                    return !isSelf && !isFriend;
+                });
 
-                if (others.length === 0) {
-                    roster.innerHTML = '<span style="color: var(--text-muted); font-size: 12px; font-style: italic;">No other agents online right now.</span>';
+                if (nonFriendOthers.length === 0) {
+                    roster.innerHTML = '<span style="color: var(--text-muted); font-size: 12px; font-style: italic;">No other non-friend agents online right now.</span>';
                     return;
                 }
 
-                others.forEach(m => {
+                nonFriendOthers.forEach(m => {
                     const cleanName = m.clientId.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                    const isFriend = friendsList.includes(cleanName);
                     const isSelected = selectedGroupAgents.includes(cleanName);
 
                     roster.innerHTML += `
@@ -647,7 +651,7 @@
                             <div><span style="color:var(--primary);">●</span> <b>${cleanName}</b> ${isSelected ? '✓' : ''}</div>
                             <div class="action-btns">
                                 <button class="btn invite-btn" onclick="openFriendChat('${cleanName}')">DM</button>
-                                ${!isFriend ? `<button class="btn invite-btn btn-secondary" onclick="sendFriendRequest('${cleanName}')">+ Friend</button>` : ''}
+                                <button class="btn invite-btn btn-secondary" onclick="sendFriendRequest('${cleanName}')">+ Friend</button>
                             </div>
                         </div>
                     `;
